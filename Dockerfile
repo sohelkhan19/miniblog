@@ -31,8 +31,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader
 
 # Laravel setup
-RUN php artisan key:generate && \
-    php artisan storage:link && \
+RUN php artisan storage:link && \
     php artisan config:cache && \
     php artisan route:cache && \
     php artisan view:cache
