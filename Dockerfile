@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libzip-dev \
     libcurl4-openssl-dev \
-    && docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
+    && docker-php-ext-install pdo_pgsql mbstring zip exif pcntl bcmath gd
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
@@ -31,24 +31,20 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader
 
 # Set permissions
-# Ensure required Laravel directories exist and set permissions
 RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache && \
     chown -R www-data:www-data storage bootstrap/cache && \
     chmod -R 775 storage bootstrap/cache
 
-
 # Apache virtual host config
 COPY .docker/vhost.conf /etc/apache2/sites-available/000-default.conf
 
-# Expose Apache port
-EXPOSE 80
-
-# Start Apache in the foreground
-CMD php artisan config:clear && \
+# Replace Apache port 80 with PORT dynamically at runtime
+# (Render provides the port in the $PORT env var)
+CMD sed -i "s/80/${PORT}/g" /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf && \
+    php artisan config:clear && \
     php artisan route:clear && \
     php artisan view:clear && \
     php artisan storage:link && \
     php artisan config:cache && \
     php artisan migrate --force && \
     apache2-foreground
-
