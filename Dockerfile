@@ -24,9 +24,6 @@ WORKDIR /var/www/html
 # Copy project files
 COPY . .
 
-# Copy .env if present
-COPY .env .env
-
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
