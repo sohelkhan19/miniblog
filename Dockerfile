@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libzip-dev \
     libcurl4-openssl-dev \
+    libpq-dev \
     && docker-php-ext-install pdo_pgsql mbstring zip exif pcntl bcmath gd
 
 # Enable Apache mod_rewrite
