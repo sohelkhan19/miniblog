@@ -43,12 +43,12 @@ COPY .docker/vhost.conf /etc/apache2/sites-available/000-default.conf
 # Expose Apache port
 EXPOSE 80
 
-# Laravel post-setup script — run at container startup instead of build
+# Start Apache in the foreground
 CMD php artisan config:clear && \
     php artisan route:clear && \
     php artisan view:clear && \
     php artisan storage:link && \
     php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache && \
+    php artisan migrate --force && \
     apache2-foreground
+
