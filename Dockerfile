@@ -33,8 +33,7 @@ RUN composer install --no-dev --optimize-autoloader
 # Laravel setup
 RUN php artisan storage:link && \
     php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache
+    php artisan route:cache
 
 # Apache config
 COPY .docker/vhost.conf /etc/apache2/sites-available/000-default.conf
