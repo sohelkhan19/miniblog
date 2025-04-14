@@ -14,6 +14,8 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     libcurl4-openssl-dev \
     libpq-dev \
+    nodejs \
+    npm \
     && docker-php-ext-install pdo_pgsql mbstring zip exif pcntl bcmath gd
 
 # Enable Apache mod_rewrite
@@ -22,14 +24,26 @@ RUN a2enmod rewrite
 # Set working directory
 WORKDIR /var/www/html
 
+# Copy Composer before copying everything (to use cache properly)
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
 # Copy project files
 COPY . .
 
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
 # Install Laravel dependencies
 RUN composer install --no-dev --optimize-autoloader
+
+
+# Manually link storage directory before starting Apache
+RUN php artisan storage:link || true
+
+# Install Node and build frontend assets
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install && \
+    npm run build
+
+
 
 # Set permissions
 RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache && \
@@ -42,10 +56,10 @@ COPY .docker/vhost.conf /etc/apache2/sites-available/000-default.conf
 # Replace Apache port 80 with PORT dynamically at runtime
 # (Render provides the port in the $PORT env var)
 CMD sed -i "s/80/${PORT}/g" /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf && \
+    php artisan optimize:clear && \
     php artisan config:clear && \
     php artisan route:clear && \
     php artisan view:clear && \
-    php artisan storage:link && \
     php artisan config:cache && \
     php artisan migrate --force && \
     apache2-foreground
