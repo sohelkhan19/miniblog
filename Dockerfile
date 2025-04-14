@@ -34,8 +34,11 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader
 
 # Set permissions
-RUN chown -R www-data:www-data storage bootstrap/cache && \
+# Ensure required Laravel directories exist and set permissions
+RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache && \
+    chown -R www-data:www-data storage bootstrap/cache && \
     chmod -R 775 storage bootstrap/cache
+
 
 # Apache virtual host config
 COPY .docker/vhost.conf /etc/apache2/sites-available/000-default.conf
