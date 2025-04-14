@@ -30,7 +30,14 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Install Laravel dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Copy existing Apache config
+# Laravel setup
+RUN php artisan key:generate && \
+    php artisan storage:link && \
+    php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache
+
+# Apache config
 COPY .docker/vhost.conf /etc/apache2/sites-available/000-default.conf
 
 # Set proper permissions
