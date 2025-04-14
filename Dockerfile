@@ -21,8 +21,11 @@ RUN a2enmod rewrite
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy app files
+# Copy project files
 COPY . .
+
+# Copy .env if present
+COPY .env .env
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -30,15 +33,23 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Install Laravel dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Laravel setup
-RUN php artisan storage:link && \
-    php artisan config:cache && \
-    php artisan route:cache
+# Set permissions
+RUN chown -R www-data:www-data storage bootstrap/cache && \
+    chmod -R 775 storage bootstrap/cache
 
-# Apache config
+# Apache virtual host config
 COPY .docker/vhost.conf /etc/apache2/sites-available/000-default.conf
 
-# Set proper permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-
+# Expose Apache port
 EXPOSE 80
+
+# Laravel post-setup script — run at container startup instead of build
+CMD php artisan config:clear && \
+    php artisan route:clear && \
+    php artisan view:clear && \
+    php artisan key:generate && \
+    php artisan storage:link && \
+    php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache && \
+    apache2-foreground
