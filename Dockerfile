@@ -33,17 +33,11 @@ COPY . .
 # Install Laravel dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-
-# Manually link storage directory before starting Apache
-RUN php artisan storage:link || true
-
 # Install Node and build frontend assets
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs && \
     npm install && \
     npm run build
-
-
 
 # Set permissions
 RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache && \
@@ -62,4 +56,5 @@ CMD sed -i "s/80/${PORT}/g" /etc/apache2/ports.conf /etc/apache2/sites-available
     php artisan view:clear && \
     php artisan config:cache && \
     php artisan migrate --force && \
+    php artisan storage:link && \
     apache2-foreground
