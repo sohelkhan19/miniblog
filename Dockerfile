@@ -14,8 +14,6 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     libcurl4-openssl-dev \
     libpq-dev \
-    nodejs \
-    npm \
     && docker-php-ext-install pdo_pgsql mbstring zip exif pcntl bcmath gd
 
 # Enable Apache mod_rewrite
@@ -50,11 +48,7 @@ COPY .docker/vhost.conf /etc/apache2/sites-available/000-default.conf
 # Replace Apache port 80 with PORT dynamically at runtime
 # (Render provides the port in the $PORT env var)
 CMD sed -i "s/80/${PORT}/g" /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf && \
-    php artisan optimize:clear && \
-    php artisan config:clear && \
-    php artisan route:clear && \
-    php artisan view:clear && \
-    php artisan config:cache && \
     php artisan migrate --force && \
     php artisan storage:link && \
+    php artisan optimize && \
     apache2-foreground
